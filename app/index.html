@@ -316,8 +316,8 @@
 
     <div class="api-bar">
       <div class="api-field">
-        <label>Claude API Key</label>
-        <input type="password" id="claude-key" placeholder="sk-ant-..." />
+        <label>OpenAI API Key</label>
+        <input type="password" id="claude-key" placeholder="sk-..." />
       </div>
       <div class="api-field">
         <label>ElevenLabs API Key</label>
@@ -355,13 +355,13 @@
         <div class="step-num">2</div>
         <div class="step-info">
           <h3>Agente 1 — Guionista</h3>
-          <p>Claude genera el guión y los prompts de música</p>
+          <p>GPT-4o genera el guión y los prompts de música</p>
         </div>
-        <span class="step-badge tag-auto">CLAUDE API</span>
+        <span class="step-badge tag-auto">OPENAI API</span>
       </div>
       <div class="step-body" id="step2-body">
         <button class="btn btn-primary" id="btn-guion" onclick="runAgent1()" disabled>
-          ✦ Generar guión con Claude
+          ✦ Generar guión con GPT-4o
         </button>
         <div class="progress-bar" id="prog1" style="display:none"><div class="progress-fill" id="progfill1"></div></div>
         <div id="status1"></div>
@@ -563,10 +563,10 @@ function handleFile(file) {
   setStepActive('step2');
 }
 
-// ── Agent 1: Claude ──
+// ── Agent 1: OpenAI ──
 async function runAgent1() {
   const key = document.getElementById('claude-key').value.trim();
-  if (!key) { showStatus('status1', 'error', '⚠ Introduce tu Claude API Key arriba'); return; }
+  if (!key) { showStatus('status1', 'error', '⚠ Introduce tu OpenAI API Key arriba'); return; }
 
   const btn = document.getElementById('btn-guion');
   btn.disabled = true; btn.textContent = '⟳ Procesando...';
@@ -575,11 +575,11 @@ async function runAgent1() {
 
   try {
     setProg('progfill1', 20);
-    const text = await extractText(key);
+    const text = await extractText();
     setProg('progfill1', 50);
-    showStatus('status1', 'info', '🧠 Claude generando guión, letra y prompts...');
+    showStatus('status1', 'info', '🧠 GPT-4o generando guión, letra y prompts...');
 
-    const result = await callClaude(key, text);
+    const result = await callOpenAI(key, text);
     setProg('progfill1', 100);
     state.guion = result;
 
@@ -591,41 +591,21 @@ async function runAgent1() {
 
   } catch(e) {
     showStatus('status1', 'error', '⚠ ' + e.message);
-    btn.disabled = false; btn.textContent = '✦ Generar guión con Claude';
+    btn.disabled = false; btn.textContent = '✦ Generar guión con GPT-4o';
   }
 }
 
-async function extractText(key) {
+async function extractText() {
   const file = state.file;
-  const ext = file.name.split('.').pop().toLowerCase();
-
-  if (ext === 'pdf') {
-    const b64 = await toBase64(file);
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 3000,
-        messages: [{ role: 'user', content: [
-          { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: b64 } },
-          { type: 'text', text: 'Extrae todo el texto relevante de este documento académico. Solo el texto, sin comentarios.' }
-        ]}]
-      })
-    });
-    const data = await res.json();
-    if (data.error) throw new Error(data.error.message);
-    return data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
-  } else {
-    return new Promise((res,rej) => {
-      const r = new FileReader();
-      r.onload = e => res((e.target.result||'').slice(0,8000));
-      r.onerror = () => rej(new Error('Error leyendo archivo'));
-      r.readAsText(file);
-    });
-  }
+  return new Promise((res,rej) => {
+    const r = new FileReader();
+    r.onload = e => res((e.target.result||'').slice(0,8000));
+    r.onerror = () => rej(new Error('Error leyendo archivo'));
+    r.readAsText(file);
+  });
 }
 
-async function callClaude(key, text) {
+async function callOpenAI(key, text) {
   const system = `Eres un productor de podcasts educativos experto. A partir del contenido académico genera:
 1. Un guión de podcast de ~5 minutos (voz única, divulgativo, introducción-desarrollo-cierre)
 2. Letra de jingle de 30s pegadiza con estribillo
@@ -643,18 +623,21 @@ Responde SOLO con JSON válido sin backticks:
   "audacity_tips": ["paso 1...", "paso 2...", "paso 3...", "paso 4...", "paso 5..."]
 }`;
 
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
+    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` },
     body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514', max_tokens: 4000,
-      system,
-      messages: [{ role: 'user', content: `Material académico:\n\n${text}` }]
+      model: 'gpt-4o',
+      max_tokens: 4000,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: `Material académico:\n\n${text}` }
+      ]
     })
   });
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
-  const raw = data.content.filter(b=>b.type==='text').map(b=>b.text).join('');
+  const raw = data.choices[0].message.content;
   return JSON.parse(raw.replace(/```json|```/g,'').trim());
 }
 
