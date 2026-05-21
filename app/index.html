@@ -374,19 +374,10 @@
           <p style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:8px;letter-spacing:1px">GUIÓN COMPLETO — editable</p>
           <textarea class="script-area" id="script-text"></textarea>
           <div class="divider"></div>
-          <p style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:1px">LETRA DEL JINGLE</p>
-          <div class="jingle-box">
-            <div class="jingle-box-label">LETRA · copia a Suno con el prompt</div>
-            <pre id="jingle-letra"></pre>
-          </div>
+          <p style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:10px;letter-spacing:1px">PROMPT DE MÚSICA — usado por el Agente 3</p>
           <div class="suno-grid">
-            <div class="suno-card">
-              <div class="suno-card-label">🎵 Suno · Jingle 30s</div>
-              <textarea id="suno-jingle" readonly></textarea>
-              <div class="suno-card-footer"><button class="btn btn-copy" onclick="copyText('suno-jingle', this)">Copiar</button></div>
-            </div>
-            <div class="suno-card">
-              <div class="suno-card-label">🎼 Suno · Fondo 5min</div>
+            <div class="suno-card" style="grid-column:1/-1">
+              <div class="suno-card-label">🎵 ElevenLabs Music · Fondo instrumental</div>
               <textarea id="suno-fondo" readonly></textarea>
               <div class="suno-card-footer"><button class="btn btn-copy" onclick="copyText('suno-fondo', this)">Copiar</button></div>
             </div>
@@ -422,28 +413,47 @@
       </div>
     </div>
 
-    <!-- STEP 4: Suno Manual -->
+    <!-- STEP 4: Música ElevenLabs -->
     <div class="step" id="step4">
       <div class="step-header">
         <div class="step-num">4</div>
         <div class="step-info">
           <h3>Agente 3 — Compositor</h3>
-          <p>Genera la música en suno.com con los prompts de arriba</p>
+          <p>ElevenLabs Music genera la música de fondo instrumental</p>
         </div>
-        <span class="step-badge tag-manual">SUNO MANUAL</span>
+        <span class="step-badge tag-auto">ELEVENLABS MUSIC</span>
       </div>
       <div class="step-body">
-        <div style="background:var(--surface2);border:1px dashed rgba(236,72,153,0.3);border-radius:10px;padding:16px;margin-bottom:14px">
-          <p style="font-family:var(--mono);font-size:11px;color:#ec4899;margin-bottom:10px;letter-spacing:1px">PASOS EN SUNO.COM</p>
-          <ol style="font-family:var(--mono);font-size:11px;color:var(--muted);line-height:2;padding-left:18px">
-            <li>Abre <strong style="color:#ccc">suno.com</strong> → Create → Custom mode</li>
-            <li>Pega el <strong style="color:#ccc">prompt del jingle</strong> → activa "Lyrics" → pega la letra → Generate</li>
-            <li>Descarga el jingle como <strong style="color:#ccc">jingle.mp3</strong></li>
-            <li>Crea nueva canción → pega el <strong style="color:#ccc">prompt de fondo</strong> → desactiva "Lyrics" → Generate</li>
-            <li>Descarga como <strong style="color:#ccc">musica_fondo.mp3</strong></li>
-          </ol>
+        <div style="background:var(--surface2);border:1px solid rgba(236,72,153,0.2);border-radius:10px;padding:14px;margin-bottom:14px">
+          <p style="font-family:var(--mono);font-size:10px;color:#ec4899;margin-bottom:8px;letter-spacing:1px">DURACIÓN DE LA MÚSICA</p>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--muted)">
+              <input type="radio" name="music-duration" value="60000" style="accent-color:#ec4899"> 1 min
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--muted)">
+              <input type="radio" name="music-duration" value="120000" style="accent-color:#ec4899"> 2 min
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--muted)">
+              <input type="radio" name="music-duration" value="180000" checked style="accent-color:#ec4899"> 3 min
+            </label>
+            <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-family:var(--mono);font-size:12px;color:var(--muted)">
+              <input type="radio" name="music-duration" value="300000" style="accent-color:#ec4899"> 5 min (máx)
+            </label>
+          </div>
         </div>
-        <button class="btn btn-ghost" onclick="markStep4Done()">✓ Ya tengo los MP3 de Suno</button>
+        <div style="background:rgba(236,72,153,0.06);border:1px solid rgba(236,72,153,0.15);border-radius:8px;padding:10px 14px;margin-bottom:14px">
+          <p style="font-family:var(--mono);font-size:10px;color:#ec4899;margin-bottom:4px">PROMPT DE MÚSICA GENERADO</p>
+          <p id="music-prompt-preview" style="font-family:var(--mono);font-size:11px;color:#888;font-style:italic">— generado por el Agente 1 —</p>
+        </div>
+        <div class="progress-bar" id="prog4" style="display:none"><div class="progress-fill" id="progfill4"></div></div>
+        <div id="status4"></div>
+        <div id="music-result" style="display:none"></div>
+        <div class="btn-row">
+          <button class="btn btn-primary" id="btn-musica" onclick="runAgent3()">
+            🎵 Generar música con ElevenLabs
+          </button>
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">Solo planes de pago</span>
+        </div>
       </div>
     </div>
 
@@ -453,7 +463,7 @@
         <div class="step-num">5</div>
         <div class="step-info">
           <h3>Edición en Audacity</h3>
-          <p>Mezcla las 3 pistas con AutoDuck</p>
+          <p>Mezcla voz.mp3 y musica_fondo.mp3 con AutoDuck</p>
         </div>
         <span class="step-badge tag-manual">AUDACITY MANUAL</span>
       </div>
@@ -504,6 +514,8 @@ const state = {
   selectedVoice: null,
   audioBlob: null,
   audioUrl: null,
+  musicBlob: null,
+  musicUrl: null,
 };
 
 const voices = [
@@ -611,18 +623,14 @@ async function extractText() {
 async function callOpenAI(key, text) {
   const system = `Eres un productor de podcasts educativos experto. A partir del contenido académico genera:
 1. Un guión de podcast de ~5 minutos (voz única, divulgativo, introducción-desarrollo-cierre)
-2. Letra de jingle de 30s pegadiza con estribillo
-3. Prompt para Suno para el jingle (estilo, instrumentos, mood)
-4. Prompt para Suno para música de fondo instrumental 5min (sin letra, para autoduck)
+2. Un prompt en inglés para ElevenLabs Music para generar música de fondo instrumental (sin letra, sin voces, para autoduck durante el podcast)
 
 Responde SOLO con JSON válido sin backticks:
 {
   "titulo": "...",
   "tema": "...",
   "guion": "...",
-  "jingle_letra": "...",
-  "suno_jingle": "...",
-  "suno_fondo": "...",
+  "music_prompt": "...",
   "audacity_tips": ["paso 1...", "paso 2...", "paso 3...", "paso 4...", "paso 5..."]
 }`;
 
@@ -651,9 +659,8 @@ function renderGuion(r) {
     <div class="result-topic">${r.tema}</div>
   `;
   document.getElementById('script-text').value = r.guion;
-  document.getElementById('jingle-letra').textContent = r.jingle_letra;
-  document.getElementById('suno-jingle').value = r.suno_jingle;
-  document.getElementById('suno-fondo').value = r.suno_fondo;
+  document.getElementById('suno-fondo').value = r.music_prompt;
+  document.getElementById('music-prompt-preview').textContent = r.music_prompt;
   document.getElementById('ivoox-title').textContent = r.titulo;
 
   // Audacity instructions
@@ -749,10 +756,79 @@ function downloadAudio() {
   a.click();
 }
 
-function markStep4Done() {
-  document.getElementById('step4').classList.add('done');
-  setStepActive('step5');
-  document.getElementById('step5').scrollIntoView({ behavior:'smooth', block:'start' });
+// ── Agent 3: ElevenLabs Music ──
+async function runAgent3() {
+  const key = document.getElementById('eleven-key').value.trim();
+  if (!key) { showStatus('status4','error','⚠ Introduce tu ElevenLabs API Key arriba'); return; }
+
+  const prompt = document.getElementById('music-prompt-preview').textContent;
+  if (!prompt || prompt.includes('generado por el Agente 1')) {
+    showStatus('status4','error','⚠ Primero genera el guión con el Agente 1'); return;
+  }
+
+  const durationEl = document.querySelector('input[name="music-duration"]:checked');
+  const durationMs = durationEl ? parseInt(durationEl.value) : 180000;
+
+  const btn = document.getElementById('btn-musica');
+  btn.disabled = true; btn.textContent = '⟳ Generando música...';
+  showProg('prog4','progfill4');
+  showStatus('status4','info','🎵 ElevenLabs Music componiendo... puede tardar 30-60s');
+  setProg('progfill4', 20);
+
+  try {
+    const res = await fetch('https://api.elevenlabs.io/v1/music-generation', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'xi-api-key': key,
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        duration_seconds: Math.round(durationMs / 1000),
+      })
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err?.detail?.message || `Error ${res.status} en ElevenLabs Music API`);
+    }
+
+    setProg('progfill4', 80);
+    const blob = await res.blob();
+    state.musicBlob = blob;
+    state.musicUrl = URL.createObjectURL(blob);
+
+    setProg('progfill4', 100);
+    showStatus('status4','success','✓ Música generada · Descarga el MP3');
+
+    const container = document.getElementById('music-result');
+    container.style.display = 'block';
+    container.innerHTML = `
+      <div class="audio-player" style="margin-top:14px">
+        <div>
+          <div class="audio-info-name">musica_fondo.mp3</div>
+          <div class="audio-info-meta">ElevenLabs Music · ${Math.round(durationMs/60000)} min · Instrumental</div>
+        </div>
+        <audio controls src="${state.musicUrl}" style="flex:1"></audio>
+        <button class="btn btn-download" onclick="downloadMusic()">⬇ Descargar</button>
+      </div>
+    `;
+
+    document.getElementById('step4').classList.add('done');
+    setStepActive('step5');
+    document.getElementById('step5').scrollIntoView({ behavior:'smooth', block:'start' });
+
+  } catch(e) {
+    showStatus('status4','error','⚠ ' + e.message);
+    btn.disabled = false; btn.textContent = '🎵 Generar música con ElevenLabs';
+  }
+}
+
+function downloadMusic() {
+  const a = document.createElement('a');
+  a.href = state.musicUrl;
+  a.download = 'musica_fondo.mp3';
+  a.click();
 }
 
 function markStep5Done() {
