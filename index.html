@@ -217,7 +217,7 @@
   <div id="panels"></div>
 
   <div class="legend">
-    <div class="legend-item legend-solid"><div class="legend-dot" style="background:#f97316;box-shadow:0 0 7px #f97316"></div><span class="legend-label">Claude API</span></div>
+    <div class="legend-item legend-solid"><div class="legend-dot" style="background:#f97316;box-shadow:0 0 7px #f97316"></div><span class="legend-label">OpenAI API</span></div>
     <div class="legend-item legend-solid"><div class="legend-dot" style="background:#8b5cf6;box-shadow:0 0 7px #8b5cf6"></div><span class="legend-label">ElevenLabs API</span></div>
     <div class="legend-item legend-solid"><div class="legend-dot" style="background:#06b6d4;box-shadow:0 0 7px #06b6d4"></div><span class="legend-label">NotebookLM</span></div>
     <div class="legend-item legend-dashed"><div class="legend-dot" style="border-color:#ec4899"></div><span class="legend-label">Suno · manual</span></div>
@@ -241,8 +241,8 @@ const flows = [
     nodes: [
       { id:1, icon:"📄", label:"Entrada", name:"Material", desc:"PDF · DOCX\nPPTX", tool:null, color:"#94a3b8", accent:"#e2e8f0",
         detail:"El flujo parte del <strong>material docente</strong>: apuntes, diapositivas o documentos de cualquier asignatura." },
-      { id:2, icon:"✍️", label:"Agente 1", name:"Guionista", desc:"Guión + prompts\nde producción", tool:"Claude API", color:"#f97316", accent:"#fed7aa", output:"guion.txt",
-        detail:"<strong>Claude</strong> lee el documento y genera el guión completo del podcast, la letra del jingle y los prompts optimizados para Suno." },
+      { id:2, icon:"✍️", label:"Agente 1", name:"Guionista", desc:"Guión + prompts\nde producción", tool:"OpenAI API", color:"#f97316", accent:"#fed7aa", output:"guion.txt",
+        detail:"<strong>GPT-4o</strong> lee el documento y genera el guión completo del podcast, la letra del jingle y los prompts optimizados para Suno." },
       { id:3, icon:"🎙️", label:"Agente 2", name:"Locutor", desc:"Voz natural\nen español", tool:"ElevenLabs API", color:"#8b5cf6", accent:"#ddd6fe", output:"voz.mp3",
         detail:"<strong>ElevenLabs</strong> convierte el guión en audio con voz natural. Plan Free: ~10.000 caracteres ≈ 7-10 min de audio." },
       { id:4, icon:"🎵", label:"Agente 3", name:"Compositor", desc:"Jingle · Fondo\nCortinillas", tool:"Suno", color:"#ec4899", accent:"#fbcfe8", output:"musica.mp3", manual:true,
