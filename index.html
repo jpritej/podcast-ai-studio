@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Podcast × AI — Flujos de Producción</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&family=Bebas+Neue&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c0c0f;
+      --surface: rgba(255,255,255,0.03);
+      --border: rgba(255,255,255,0.08);
+      --text: #fff;
+      --muted: #555;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'IBM Plex Sans', sans-serif;
+      --display: 'Bebas Neue', sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      background: var(--bg);
+      font-family: var(--sans);
+      padding: 40px 20px 80px;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none; z-index: 0;
+    }
+
+    .wrapper { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; }
+
+    /* ── Header ── */
+    .header { text-align: center; margin-bottom: 44px; }
+    .header-badge {
+      display: inline-block;
+      font-family: var(--mono); font-size: 10px; letter-spacing: 4px;
+      color: var(--muted); margin-bottom: 12px; text-transform: uppercase;
+    }
+    .header h1 {
+      font-family: var(--display);
+      font-size: clamp(36px, 6vw, 62px);
+      color: var(--text); letter-spacing: 3px; line-height: 1;
+    }
+    .header h1 span { color: #f97316; }
+    .header p { font-family: var(--mono); font-size: 12px; color: var(--muted); margin-top: 10px; }
+
+    /* ── Tabs ── */
+    .tabs {
+      display: flex; gap: 6px; flex-wrap: wrap;
+      justify-content: center; margin-bottom: 36px;
+    }
+    .tab {
+      font-family: var(--mono); font-size: 11px; letter-spacing: 1px;
+      padding: 8px 16px; border-radius: 999px; cursor: pointer;
+      border: 1px solid var(--border);
+      background: var(--surface); color: var(--muted);
+      transition: all 0.2s ease; white-space: nowrap;
+    }
+    .tab:hover { border-color: rgba(255,255,255,0.2); color: #aaa; }
+    .tab.active {
+      color: var(--text);
+      border-color: var(--tab-color, #f97316);
+      background: color-mix(in srgb, var(--tab-color, #f97316) 12%, transparent);
+      box-shadow: 0 0 14px color-mix(in srgb, var(--tab-color, #f97316) 30%, transparent);
+    }
+
+    /* ── Flow panel ── */
+    .flow-panel { display: none; animation: fadeUp 0.35s ease forwards; }
+    .flow-panel.active { display: block; }
+    @keyframes fadeUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+
+    .flow-header { text-align: center; margin-bottom: 32px; }
+    .flow-title {
+      font-family: var(--display); font-size: clamp(22px, 4vw, 36px);
+      color: var(--text); letter-spacing: 2px; margin-bottom: 6px;
+    }
+    .flow-title span { color: var(--flow-color, #f97316); }
+    .flow-desc { font-family: var(--mono); font-size: 11px; color: var(--muted); }
+
+    /* ── Nodes row ── */
+    .flow-nodes {
+      display: flex; align-items: center;
+      justify-content: center; flex-wrap: wrap; gap: 0;
+      margin-bottom: 12px;
+    }
+
+    .node {
+      width: 136px; min-height: 160px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 18px 12px;
+      text-align: center; cursor: pointer;
+      position: relative;
+      transition: all 0.22s ease;
+      opacity: 0; transform: translateY(16px);
+      animation: fadeUp 0.35s ease forwards;
+    }
+    .node:hover { border-color: rgba(255,255,255,0.16); background: rgba(255,255,255,0.05); }
+    .node.active {
+      border-color: var(--nc) !important;
+      background: color-mix(in srgb, var(--nc) 12%, transparent) !important;
+      box-shadow: 0 0 22px color-mix(in srgb, var(--nc) 35%, transparent);
+    }
+    .node.manual { border-style: dashed; }
+    .node.manual::after {
+      content: '◆ MANUAL';
+      position: absolute; top: -10px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg);
+      font-family: var(--mono); font-size: 7px; letter-spacing: 1.5px;
+      color: var(--nc); padding: 0 6px;
+    }
+
+    .node-label {
+      font-family: var(--mono); font-size: 8px; letter-spacing: 2px;
+      text-transform: uppercase; color: var(--nc); margin-bottom: 8px;
+    }
+    .node-icon { font-size: 28px; margin-bottom: 8px; display: block; line-height: 1; }
+    .node-name { font-weight: 600; font-size: 13px; color: var(--text); margin-bottom: 5px; }
+    .node-desc {
+      font-family: var(--mono); font-size: 9px; color: #666;
+      line-height: 1.6; white-space: pre-line;
+    }
+    .node-tool {
+      display: inline-block; margin-top: 10px;
+      border-radius: 999px; padding: 2px 9px;
+      font-family: var(--mono); font-size: 8px;
+      background: color-mix(in srgb, var(--nc) 14%, transparent);
+      border: 1px solid color-mix(in srgb, var(--nc) 35%, transparent);
+      color: var(--na);
+    }
+    .node-output {
+      position: absolute; bottom: -14px; left: 50%;
+      transform: translateX(-50%);
+      background: var(--bg);
+      border: 1px solid color-mix(in srgb, var(--nc) 50%, transparent);
+      border-radius: 999px; padding: 2px 9px;
+      font-family: var(--mono); font-size: 8px;
+      color: var(--nc); white-space: nowrap; z-index: 2;
+    }
+
+    /* ── Arrow ── */
+    .arrow {
+      display: flex; flex-direction: column; align-items: center;
+      width: 32px; opacity: 0.3; flex-shrink: 0;
+    }
+    .arrow-line { width: 18px; height: 1px; background: linear-gradient(90deg,#333,#777); }
+    .arrow-head {
+      width:0; height:0;
+      border-top: 3px solid transparent;
+      border-bottom: 3px solid transparent;
+      border-left: 5px solid #777;
+      margin-left: 18px; margin-top: -3px;
+    }
+
+    /* ── Detail panel ── */
+    .detail {
+      max-width: 580px; margin: 40px auto 0;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px; padding: 22px 26px;
+      display: none; animation: fadeUp 0.25s ease forwards;
+    }
+    .detail.visible { display: block; }
+    .detail-title {
+      font-family: var(--display); font-size: 20px;
+      letter-spacing: 2px; color: var(--text); margin-bottom: 4px;
+    }
+    .detail-badge {
+      display: inline-block; border-radius: 999px; padding: 3px 11px;
+      font-family: var(--mono); font-size: 9px; margin-bottom: 14px;
+    }
+    .detail-body { font-size: 13px; color: #999; line-height: 1.75; }
+    .detail-body strong { color: #ddd; }
+
+    /* ── Legend ── */
+    .legend {
+      display: flex; gap: 20px; flex-wrap: wrap;
+      justify-content: center; margin-top: 52px;
+    }
+    .legend-item { display: flex; align-items: center; gap: 7px; }
+    .legend-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .legend-solid .legend-dot { }
+    .legend-dashed { opacity: 0.7; }
+    .legend-dashed .legend-dot { background: transparent !important; border: 1.5px dashed; border-radius: 50%; width: 9px; height: 9px; }
+    .legend-label { font-family: var(--mono); font-size: 10px; color: var(--muted); }
+
+    .hint { text-align:center; margin-top:18px; font-family:var(--mono); font-size:10px; color:#222; letter-spacing:1px; }
+
+    @media (max-width: 600px) {
+      .node { width: 110px; padding: 14px 8px; }
+      .node-icon { font-size: 22px; }
+      .node-name { font-size: 11px; }
+    }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <div class="header">
+    <div class="header-badge">Producción de podcasts con IA · USAL</div>
+    <h1>PODCAST <span>×</span> AI FLOWS</h1>
+    <p>5 flujos de producción · Haz clic en cada nodo para ver detalles</p>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="panels"></div>
+
+  <div class="legend">
+    <div class="legend-item legend-solid"><div class="legend-dot" style="background:#f97316;box-shadow:0 0 7px #f97316"></div><span class="legend-label">Claude API</span></div>
+    <div class="legend-item legend-solid"><div class="legend-dot" style="background:#8b5cf6;box-shadow:0 0 7px #8b5cf6"></div><span class="legend-label">ElevenLabs API</span></div>
+    <div class="legend-item legend-solid"><div class="legend-dot" style="background:#06b6d4;box-shadow:0 0 7px #06b6d4"></div><span class="legend-label">NotebookLM</span></div>
+    <div class="legend-item legend-dashed"><div class="legend-dot" style="border-color:#ec4899"></div><span class="legend-label">Suno · manual</span></div>
+    <div class="legend-item legend-dashed"><div class="legend-dot" style="border-color:#a78bfa"></div><span class="legend-label">Fliki · manual</span></div>
+    <div class="legend-item legend-dashed"><div class="legend-dot" style="border-color:#10b981"></div><span class="legend-label">Audacity · manual</span></div>
+    <div class="legend-item legend-dashed"><div class="legend-dot" style="border-color:#f59e0b"></div><span class="legend-label">Ivoox · manual</span></div>
+    <div class="legend-item legend-dashed"><div class="legend-dot" style="border-color:#64748b"></div><span class="legend-label">Studium · manual</span></div>
+  </div>
+
+  <p class="hint">PODCAST STUDIO · AI ORCHESTRATOR · USAL</p>
+</div>
+
+<script>
+const flows = [
+  {
+    id: "f1",
+    tab: "F1 · Agentes IA",
+    color: "#f97316",
+    title: "FLUJO 1 · <span>Agentes IA</span>",
+    desc: "Pipeline automatizado con Claude + ElevenLabs · 3 agentes + 2 pasos manuales",
+    nodes: [
+      { id:1, icon:"📄", label:"Entrada", name:"Material", desc:"PDF · DOCX\nPPTX", tool:null, color:"#94a3b8", accent:"#e2e8f0",
+        detail:"El flujo parte del <strong>material docente</strong>: apuntes, diapositivas o documentos de cualquier asignatura." },
+      { id:2, icon:"✍️", label:"Agente 1", name:"Guionista", desc:"Guión + prompts\nde producción", tool:"Claude API", color:"#f97316", accent:"#fed7aa", output:"guion.txt",
+        detail:"<strong>Claude</strong> lee el documento y genera el guión completo del podcast, la letra del jingle y los prompts optimizados para Suno." },
+      { id:3, icon:"🎙️", label:"Agente 2", name:"Locutor", desc:"Voz natural\nen español", tool:"ElevenLabs API", color:"#8b5cf6", accent:"#ddd6fe", output:"voz.mp3",
+        detail:"<strong>ElevenLabs</strong> convierte el guión en audio con voz natural. Plan Free: ~10.000 caracteres ≈ 7-10 min de audio." },
+      { id:4, icon:"🎵", label:"Agente 3", name:"Compositor", desc:"Jingle · Fondo\nCortinillas", tool:"Suno", color:"#ec4899", accent:"#fbcfe8", output:"musica.mp3", manual:true,
+        detail:"Pegas los prompts generados por Claude en <strong>suno.com</strong> y descargas el jingle (30s), música de fondo (5 min) y cortinillas." },
+      { id:5, icon:"🎚️", label:"Manual 1", name:"Edición", desc:"Mezcla · AutoDuck\nNormalización", tool:"Audacity", color:"#10b981", accent:"#a7f3d0", output:"podcast.mp3", manual:true,
+        detail:"En <strong>Audacity</strong>: importa las 3 pistas, aplica Auto Duck (Effect → Auto Duck), fade in/out y normaliza. Exporta como MP3." },
+      { id:6, icon:"📡", label:"Manual 2", name:"Publicación", desc:"Sube el episodio\na tu canal", tool:"Ivoox", color:"#f59e0b", accent:"#fde68a", manual:true,
+        detail:"Sube el MP3 final a <strong>Ivoox</strong> con título, descripción y etiquetas. Ivoox distribuye automáticamente a otras plataformas." },
+    ]
+  },
+  {
+    id: "f2",
+    tab: "F2 · NotebookLM + Fliki",
+    color: "#06b6d4",
+    title: "FLUJO 2 · <span>NotebookLM + Fliki</span>",
+    desc: "Resumen de asignatura · PDFs → NotebookLM Studio → Fliki → Suno → Audacity → Ivoox → Studium",
+    nodes: [
+      { id:1, icon:"📚", label:"Entrada", name:"PDFs Asignatura", desc:"Apuntes · Libros\nDiapositivas", tool:null, color:"#94a3b8", accent:"#e2e8f0",
+        detail:"Subes los <strong>PDFs del tema</strong> a un cuaderno de NotebookLM. Pueden ser apuntes, capítulos de libro o tus diapositivas." },
+      { id:2, icon:"📓", label:"Paso 1", name:"NotebookLM", desc:"Cuaderno del\ntema", tool:"NotebookLM", color:"#06b6d4", accent:"#a5f3fc", manual:true,
+        detail:"Creas un <strong>cuaderno en NotebookLM</strong> y subes los PDFs como fuentes. NotebookLM analiza y conecta los contenidos automáticamente." },
+      { id:3, icon:"🎬", label:"Paso 2", name:"Studio Script", desc:"Script podcast\n~1 minuto", tool:"NLM Studio", color:"#06b6d4", accent:"#a5f3fc", output:"script.txt", manual:true,
+        detail:"Desde la sección <strong>Studio</strong> de NotebookLM generas un script para podcast de 1 minuto que resume el tema. Puedes editarlo antes de continuar." },
+      { id:4, icon:"🗣️", label:"Paso 3", name:"Fliki", desc:"Voz + vídeo\nopcional", tool:"Fliki", color:"#a78bfa", accent:"#ede9fe", output:"voz.mp3", manual:true,
+        detail:"Pegas el script en <strong>Fliki</strong> para generar la voz. Fliki también permite añadir imágenes y subtítulos si quieres versión vídeo para YouTube." },
+      { id:5, icon:"🎵", label:"Paso 4", name:"Suno", desc:"Música fondo\n+ Logo musical", tool:"Suno", color:"#ec4899", accent:"#fbcfe8", output:"musica.mp3", manual:true,
+        detail:"Genera en <strong>Suno</strong> la música de fondo instrumental y el logo musical (jingle corto de 5-10s) que identifica tu podcast." },
+      { id:6, icon:"🎚️", label:"Paso 5", name:"Audacity", desc:"Mezcla final\ncon AutoDuck", tool:"Audacity", color:"#10b981", accent:"#a7f3d0", output:"podcast.mp3", manual:true,
+        detail:"Monta en <strong>Audacity</strong>: logo musical de apertura, voz con música de fondo con AutoDuck, cierre. Exporta el MP3 final." },
+      { id:7, icon:"📡", label:"Paso 6", name:"Ivoox", desc:"Publica el\nepisodio", tool:"Ivoox", color:"#f59e0b", accent:"#fde68a", manual:true,
+        detail:"Sube el episodio a <strong>Ivoox</strong>. Copia el código iframe del reproductor una vez publicado." },
+      { id:8, icon:"🎓", label:"Paso 7", name:"Studium", desc:"iframe en\nMoodle USAL", tool:"Studium", color:"#64748b", accent:"#cbd5e1", manual:true,
+        detail:"Pega el <strong>iframe de Ivoox</strong> en tu curso de Studium (Moodle USAL). Los alumnos escuchan el podcast sin salir del aula virtual." },
+    ]
+  },
+  {
+    id: "f3",
+    tab: "F3 · Web I+D",
+    color: "#10b981",
+    title: "FLUJO 3 · <span>Web I+D → Divulgación</span>",
+    desc: "Podcast divulgativo de un proyecto de investigación a partir de su web",
+    nodes: [
+      { id:1, icon:"🌐", label:"Entrada", name:"Web Proyecto", desc:"Web pública\nde I+D", tool:null, color:"#94a3b8", accent:"#e2e8f0",
+        detail:"El punto de partida es la <strong>web pública del proyecto de investigación</strong>: descripción, objetivos, resultados, publicaciones." },
+      { id:2, icon:"🗣️", label:"Paso 1", name:"Fliki", desc:"Audio divulgativo\ndesde URL", tool:"Fliki", color:"#a78bfa", accent:"#ede9fe", output:"voz.mp3", manual:true,
+        detail:"<strong>Fliki</strong> puede tomar una URL como fuente y generar directamente un guión divulgativo con voz. Sin necesidad de escribir nada." },
+      { id:3, icon:"🎵", label:"Paso 2", name:"Suno", desc:"Música de fondo\ninstrumental", tool:"Suno", color:"#ec4899", accent:"#fbcfe8", output:"musica.mp3", manual:true,
+        detail:"Genera en <strong>Suno</strong> música de fondo que encaje con el tema del proyecto (científica, tecnológica, etc.)." },
+      { id:4, icon:"🎚️", label:"Paso 3", name:"Audacity", desc:"Mezcla · AutoDuck\nExportación", tool:"Audacity", color:"#10b981", accent:"#a7f3d0", output:"podcast.mp3", manual:true,
+        detail:"Monta en <strong>Audacity</strong> la voz con la música de fondo usando AutoDuck. Añade fade in/out y normaliza el volumen." },
+      { id:5, icon:"📡", label:"Paso 4", name:"Ivoox", desc:"Publica en\ntu canal", tool:"Ivoox", color:"#f59e0b", accent:"#fde68a", manual:true,
+        detail:"Publica en <strong>Ivoox</strong>. Ideal para canales de divulgación científica o de grupos de investigación." },
+    ]
+  },
+  {
+    id: "f4",
+    tab: "F4 · Meet + NLM Audio",
+    color: "#8b5cf6",
+    title: "FLUJO 4 · <span>Transcripción Meet → Audio NLM</span>",
+    desc: "De la transcripción de una clase grabada en Meet al podcast publicado en Studium",
+    nodes: [
+      { id:1, icon:"📹", label:"Entrada", name:"Google Meet", desc:"Transcripción\nde la clase", tool:"Google Meet", color:"#94a3b8", accent:"#e2e8f0",
+        detail:"Activa la <strong>transcripción automática en Google Meet</strong> durante la clase. Al terminar, descarga el archivo .txt o .docx de la transcripción." },
+      { id:2, icon:"📓", label:"Paso 1", name:"NotebookLM", desc:"Sube la\ntranscripción", tool:"NotebookLM", color:"#06b6d4", accent:"#a5f3fc", manual:true,
+        detail:"Crea un cuaderno en <strong>NotebookLM</strong> y sube la transcripción como fuente. NotebookLM la indexa y permite generar contenido a partir de ella." },
+      { id:3, icon:"🎙️", label:"Paso 2", name:"Audio NLM", desc:"Genera audio\ndel podcast", tool:"NLM Studio", color:"#06b6d4", accent:"#a5f3fc", output:"voz.mp3", manual:true,
+        detail:"Desde <strong>Studio de NotebookLM</strong> genera directamente el audio del podcast. NotebookLM crea una conversación entre dos voces que resume la clase." },
+      { id:4, icon:"🎵", label:"Paso 3", name:"Suno", desc:"Música de fondo\n+ cortinillas", tool:"Suno", color:"#ec4899", accent:"#fbcfe8", output:"musica.mp3", manual:true,
+        detail:"Genera en <strong>Suno</strong> la música de fondo y las cortinillas de transición para el podcast." },
+      { id:5, icon:"🎚️", label:"Paso 4", name:"Audacity", desc:"Mezcla final\ncon AutoDuck", tool:"Audacity", color:"#10b981", accent:"#a7f3d0", output:"podcast.mp3", manual:true,
+        detail:"Monta en <strong>Audacity</strong>: intro musical, audio de NotebookLM con música de fondo en AutoDuck, cierre. Exporta MP3." },
+      { id:6, icon:"📡", label:"Paso 5", name:"Ivoox", desc:"Publica el\nepisodio", tool:"Ivoox", color:"#f59e0b", accent:"#fde68a", manual:true,
+        detail:"Sube a <strong>Ivoox</strong> y copia el código iframe del reproductor." },
+      { id:7, icon:"🎓", label:"Paso 6", name:"Studium", desc:"iframe en\nMoodle USAL", tool:"Studium", color:"#64748b", accent:"#cbd5e1", manual:true,
+        detail:"Inserta el <strong>iframe de Ivoox</strong> en el tema correspondiente de tu curso en Studium. Los alumnos tienen el resumen de la clase en audio." },
+    ]
+  },
+  {
+    id: "f5",
+    tab: "F5 · Meet + NLM Guión + Fliki",
+    color: "#a78bfa",
+    title: "FLUJO 5 · <span>Transcripción Meet → Fliki</span>",
+    desc: "Como el Flujo 4 pero NotebookLM genera solo el guión y Fliki produce la voz",
+    nodes: [
+      { id:1, icon:"📹", label:"Entrada", name:"Google Meet", desc:"Transcripción\nde la clase", tool:"Google Meet", color:"#94a3b8", accent:"#e2e8f0",
+        detail:"Activa la <strong>transcripción automática en Google Meet</strong>. Descarga el .txt o .docx al terminar la clase." },
+      { id:2, icon:"📓", label:"Paso 1", name:"NotebookLM", desc:"Sube la\ntranscripción", tool:"NotebookLM", color:"#06b6d4", accent:"#a5f3fc", manual:true,
+        detail:"Sube la transcripción a un cuaderno de <strong>NotebookLM</strong> como fuente." },
+      { id:3, icon:"✍️", label:"Paso 2", name:"Guión NLM", desc:"Solo el guión\nno el audio", tool:"NLM Studio", color:"#06b6d4", accent:"#a5f3fc", output:"guion.txt", manual:true,
+        detail:"Desde <strong>Studio de NotebookLM</strong> genera únicamente el guión del podcast (no el audio). Esto te da más control sobre el resultado final." },
+      { id:4, icon:"🗣️", label:"Paso 3", name:"Fliki", desc:"Voz desde\nel guión", tool:"Fliki", color:"#a78bfa", accent:"#ede9fe", output:"voz.mp3", manual:true,
+        detail:"Pega el guión en <strong>Fliki</strong> para generar la voz. Puedes elegir el locutor, el idioma y el ritmo. Opcionalmente añade imágenes para versión vídeo." },
+      { id:5, icon:"🎵", label:"Paso 4", name:"Suno", desc:"Música de fondo\n+ cortinillas", tool:"Suno", color:"#ec4899", accent:"#fbcfe8", output:"musica.mp3", manual:true,
+        detail:"Genera en <strong>Suno</strong> la música de fondo y cortinillas." },
+      { id:6, icon:"🎚️", label:"Paso 5", name:"Audacity", desc:"Mezcla final\ncon AutoDuck", tool:"Audacity", color:"#10b981", accent:"#a7f3d0", output:"podcast.mp3", manual:true,
+        detail:"Monta en <strong>Audacity</strong> con AutoDuck y exporta el MP3 final." },
+      { id:7, icon:"📡", label:"Paso 6", name:"Ivoox", desc:"Publica el\nepisodio", tool:"Ivoox", color:"#f59e0b", accent:"#fde68a", manual:true,
+        detail:"Sube a <strong>Ivoox</strong> y copia el iframe del episodio." },
+      { id:8, icon:"🎓", label:"Paso 7", name:"Studium", desc:"iframe en\nMoodle USAL", tool:"Studium", color:"#64748b", accent:"#cbd5e1", manual:true,
+        detail:"Inserta el <strong>iframe</strong> en tu curso de Studium. Diferencia con F4: la voz es de Fliki (más controlable) en lugar de las voces automáticas de NotebookLM." },
+    ]
+  },
+];
+
+// State
+let activeFlow = "f1";
+let activeNode = null; // "flowId-nodeId"
+
+function init() {
+  renderTabs();
+  renderPanels();
+  activateFlow("f1");
+}
+
+function renderTabs() {
+  const container = document.getElementById("tabs");
+  flows.forEach(flow => {
+    const btn = document.createElement("button");
+    btn.className = "tab";
+    btn.id = "tab-" + flow.id;
+    btn.textContent = flow.tab;
+    btn.style.setProperty("--tab-color", flow.color);
+    btn.addEventListener("click", () => activateFlow(flow.id));
+    container.appendChild(btn);
+  });
+}
+
+function renderPanels() {
+  const container = document.getElementById("panels");
+  flows.forEach(flow => {
+    const panel = document.createElement("div");
+    panel.className = "flow-panel";
+    panel.id = "panel-" + flow.id;
+
+    panel.innerHTML = `
+      <div class="flow-header">
+        <div class="flow-title" style="--flow-color:${flow.color}">${flow.title}</div>
+        <div class="flow-desc">${flow.desc}</div>
+      </div>
+      <div class="flow-nodes" id="nodes-${flow.id}"></div>
+      <div class="detail" id="detail-${flow.id}">
+        <div class="detail-title" id="dtitle-${flow.id}"></div>
+        <div class="detail-badge" id="dbadge-${flow.id}"></div>
+        <div class="detail-body" id="dbody-${flow.id}"></div>
+      </div>
+    `;
+    container.appendChild(panel);
+    renderNodes(flow);
+  });
+}
+
+function renderNodes(flow) {
+  const container = document.getElementById("nodes-" + flow.id);
+  container.innerHTML = "";
+
+  flow.nodes.forEach((node, i) => {
+    const key = flow.id + "-" + node.id;
+    const isActive = activeNode === key;
+
+    // Node
+    const el = document.createElement("div");
+    el.className = "node" + (node.manual ? " manual" : "") + (isActive ? " active" : "");
+    el.style.setProperty("--nc", node.color);
+    el.style.setProperty("--na", node.accent);
+    el.style.animationDelay = (i * 0.08) + "s";
+
+    el.innerHTML = `
+      <div class="node-label">${node.label}</div>
+      <span class="node-icon">${node.icon}</span>
+      <div class="node-name">${node.name}</div>
+      <div class="node-desc">${node.desc}</div>
+      ${node.tool ? `<div class="node-tool">${node.tool}</div>` : ""}
+      ${node.output ? `<div class="node-output">↓ ${node.output}</div>` : ""}
+    `;
+
+    el.addEventListener("click", () => {
+      activeNode = activeNode === key ? null : key;
+      renderNodes(flow);
+      updateDetail(flow);
+    });
+
+    container.appendChild(el);
+
+    // Arrow
+    if (i < flow.nodes.length - 1) {
+      const arrow = document.createElement("div");
+      arrow.className = "arrow";
+      arrow.innerHTML = `<div class="arrow-line"></div><div class="arrow-head"></div>`;
+      container.appendChild(arrow);
+    }
+  });
+}
+
+function updateDetail(flow) {
+  const panel = document.getElementById("detail-" + flow.id);
+  const titleEl = document.getElementById("dtitle-" + flow.id);
+  const badgeEl = document.getElementById("dbadge-" + flow.id);
+  const bodyEl = document.getElementById("dbody-" + flow.id);
+
+  const key = activeNode;
+  if (!key || !key.startsWith(flow.id)) {
+    panel.classList.remove("visible");
+    return;
+  }
+
+  const nodeId = parseInt(key.split("-")[1]);
+  const node = flow.nodes.find(n => n.id === nodeId);
+  if (!node) return;
+
+  titleEl.textContent = node.name;
+
+  if (node.tool) {
+    badgeEl.style.background = node.color + "22";
+    badgeEl.style.border = `1px solid ${node.color}55`;
+    badgeEl.style.color = node.accent;
+    badgeEl.textContent = node.tool + (node.manual ? " · paso manual" : " · automatizado");
+    badgeEl.style.display = "inline-block";
+  } else {
+    badgeEl.style.display = "none";
+  }
+
+  bodyEl.innerHTML = node.detail;
+  panel.style.borderColor = node.color + "44";
+  panel.classList.add("visible");
+}
+
+function activateFlow(id) {
+  activeFlow = id;
+  activeNode = null;
+
+  // Tabs
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  const tab = document.getElementById("tab-" + id);
+  if (tab) tab.classList.add("active");
+
+  // Panels
+  document.querySelectorAll(".flow-panel").forEach(p => p.classList.remove("active"));
+  const panel = document.getElementById("panel-" + id);
+  if (panel) panel.classList.add("active");
+
+  // Hide detail
+  const detail = document.getElementById("detail-" + id);
+  if (detail) detail.classList.remove("visible");
+
+  // Re-render nodes for animation
+  const flow = flows.find(f => f.id === id);
+  if (flow) renderNodes(flow);
+}
+
+init();
+</script>
+</body>
+</html>
