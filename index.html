@@ -220,6 +220,7 @@
   <div class="legend">
     <div class="legend-item legend-solid"><div class="legend-dot" style="background:#f97316;box-shadow:0 0 7px #f97316"></div><span class="legend-label">OpenAI API</span></div>
     <div class="legend-item legend-solid"><div class="legend-dot" style="background:#8b5cf6;box-shadow:0 0 7px #8b5cf6"></div><span class="legend-label">ElevenLabs API</span></div>
+    <div class="legend-item legend-dashed"><div class="legend-dot" style="border-color:#8b5cf6"></div><span class="legend-label">ElevenLabs SFX · manual</span></div>
     <div class="legend-item legend-solid"><div class="legend-dot" style="background:#06b6d4;box-shadow:0 0 7px #06b6d4"></div><span class="legend-label">NotebookLM</span></div>
     <div class="legend-item legend-dashed"><div class="legend-dot" style="border-color:#ec4899"></div><span class="legend-label">Suno · manual</span></div>
     <div class="legend-item legend-dashed"><div class="legend-dot" style="border-color:#a78bfa"></div><span class="legend-label">Fliki · manual</span></div>
@@ -284,17 +285,19 @@ const flows = [
     tab: "F3 · Web I+D",
     color: "#10b981",
     title: "FLUJO 3 · <span>Web I+D → Divulgación</span>",
-    desc: "Podcast divulgativo de un proyecto de investigación a partir de su web",
+    desc: "Podcast divulgativo de un proyecto de investigación · Web → Fliki → Suno → ElevenLabs SFX → Audacity → iVoox",
     nodes: [
       { id:1, icon:"🌐", label:"Entrada", name:"Web Proyecto", desc:"Web pública\nde I+D", tool:null, color:"#94a3b8", accent:"#e2e8f0",
         detail:"El punto de partida es la <strong>web pública del proyecto de investigación</strong>: descripción, objetivos, resultados, publicaciones." },
       { id:2, icon:"🗣️", label:"Paso 1", name:"Fliki", desc:"Audio divulgativo\ndesde URL", tool:"Fliki", color:"#a78bfa", accent:"#ede9fe", output:"voz.mp3", manual:true,
         detail:"<strong>Fliki</strong> puede tomar una URL como fuente y generar directamente un guión divulgativo con voz. Sin necesidad de escribir nada." },
       { id:3, icon:"🎵", label:"Paso 2", name:"Suno", desc:"Música de fondo\ninstrumental", tool:"Suno", color:"#ec4899", accent:"#fbcfe8", output:"musica.mp3", manual:true,
-        detail:"Genera en <strong>Suno</strong> música de fondo que encaje con el tema del proyecto (científica, tecnológica, etc.)." },
-      { id:4, icon:"🎚️", label:"Paso 3", name:"Audacity", desc:"Mezcla · AutoDuck\nExportación", tool:"Audacity", color:"#10b981", accent:"#a7f3d0", output:"podcast.mp3", manual:true,
-        detail:"Monta en <strong>Audacity</strong> la voz con la música de fondo usando AutoDuck. Añade fade in/out y normaliza el volumen." },
-      { id:5, icon:"📡", label:"Paso 4", name:"iVoox", desc:"Publica en\ntu canal", tool:"iVoox", color:"#f59e0b", accent:"#fde68a", manual:true,
+        detail:"Genera en <strong>Suno</strong> música de fondo instrumental que encaje con el tema del proyecto (científica, tecnológica, etc.)." },
+      { id:4, icon:"💥", label:"Paso 3", name:"Efecto Sonido", desc:"Cortinilla de\nentrada", tool:"ElevenLabs SFX", color:"#8b5cf6", accent:"#ddd6fe", output:"efecto.mp3", manual:true,
+        detail:"Genera en <strong>ElevenLabs Sound Effects</strong> una cortinilla de entrada. El efecto arranca a la vez que la música de fondo, antes de que entre la voz.<br><br>Ejemplo de prompt:<br><em>\"Fast keyboard typing for 2 seconds, immediately followed by 3 loud repeated Windows error notification sounds, strident and jarring, 4 seconds\"</em>" },
+      { id:5, icon:"🎚️", label:"Paso 4", name:"Audacity", desc:"Mezcla · AutoDuck\nExportación", tool:"Audacity", color:"#10b981", accent:"#a7f3d0", output:"podcast.mp3", manual:true,
+        detail:"Estructura de pistas en <strong>Audacity</strong>:<br><br>▸ Pista 1: <strong>efecto.mp3</strong> — arranca al inicio<br>▸ Pista 2: <strong>musica.mp3</strong> — arranca al inicio, AutoDuck sobre la voz<br>▸ Pista 3: <strong>voz.mp3</strong> — entra cuando termina el efecto<br><br>AutoDuck solo sobre la música, no sobre el efecto. Normaliza la mezcla final a −16 LUFS." },
+      { id:6, icon:"📡", label:"Paso 5", name:"iVoox", desc:"Publica en\ntu canal", tool:"iVoox", color:"#f59e0b", accent:"#fde68a", manual:true,
         detail:"Publica en <strong>iVoox</strong>. Ideal para canales de divulgación científica o de grupos de investigación." },
     ]
   },
